@@ -13,6 +13,13 @@
 
 SoftwareSerial myserial(rx, tx);                      //define how the soft serial port is going to work
 
+// Ethernet libraries
+#include <SPI.h>
+#include <Ethernet.h>
+
+#include <ArduinoRS485.h> // ArduinoModbus depends on the ArduinoRS485 library
+#include <ArduinoModbus.h>
+
 
 String inputstring = "";                              //a string to hold incoming data from the PC
 String sensorstring = "";                             //a string to hold the data from the Atlas Scientific product
@@ -20,6 +27,14 @@ boolean input_string_complete = false;                //have we recived all the 
 boolean sensor_string_complete = false;               //have we recived all the data from the Atlas Scientific product
 
 
+// Set up MAC address and IP
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+IPAddress ip(172, 21, 103, 33);
+IPAddress netmask(255, 255, 254, 0);
+IPAddress gateway(172, 21, 102, 1);
+
+EthernetServer ethServer(502);
+ModbusTCPServer modbusTCPServer;
 
 
 void setup() {                                        //set up the hardware
@@ -29,6 +44,39 @@ void setup() {                                        //set up the hardware
   sensorstring.reserve(30);                           //set aside some bytes for reciving data from Atlas Scientific product
   myserial.print("O,T,1\r");                          //enable the temperature readout
   myserial.print("O,Dew,1\r");                        //enable the dew point readout
+
+  Ethernet.begin(mac, ip);                            // Set up the ethernet
+  Ethernet.setSubnetMask(netmask);
+  Ethernet.setGatewayIP(gateway);
+
+  // Check for Ethernet hardware present
+  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+    Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
+    while (true) {
+      delay(1); // do nothing, no point running without Ethernet hardware
+    }
+  }
+  if (Ethernet.linkStatus() == LinkOFF) {
+    Serial.println("Ethernet cable is not connected.");
+  }
+
+  Serial.print("My IP address: ");
+  Serial.println(Ethernet.localIP());
+
+  // start the server
+  ethServer.begin();
+
+  // start the Modbus TCP server
+  if (!modbusTCPServer.begin()) {
+    Serial.println("Failed to start Modbus TCP Server!");
+    while (1);
+  }
+
+  // configure input registers at address 0x00
+
+  modbusTCPServer.configureInputRegisters(0x00,6);
+
+  
 }
 
 
@@ -39,6 +87,20 @@ void serialEvent() {                                  //if the hardware serial p
 
 
 void loop() {                                         //here we go...
+
+  EthernetClient client = ethServer.available();
+  
+  if (client) {
+    // a new client connected
+    // Serial.println("new client");
+
+    // let the Modbus TCP accept the connection 
+    modbusTCPServer.accept(client);
+    if (client.connected()) {
+      // poll for Modbus TCP requests, while client connected
+      modbusTCPServer.poll();
+    }
+  }
 
   if (input_string_complete == true) {                //if a string from the PC has been recived in its entirety
     myserial.print(inputstring);                      //send that string to the Atlas Scientific product
@@ -79,10 +141,10 @@ void print_Humidity_data(void) {                      //this function will pars 
   char *NUL;                                          //char pointer used in string parsing (the sensor outputs some text that we don't need).
   char *DEW;                                          //char pointer used in string parsing.
 
-float HUM_float;                                      //float var used to hold the float value of the humidity.
-float TMP_float;                                      //float var used to hold the float value of the temperatur.
-float DEW_float;                                      //float var used to hold the float value of the dew point.
-  
+  float HUM_float;                                    //float var used to hold the float value of the humidity.
+  float TMP_float;                                    //float var used to hold the float value of the temperatur.
+  float DEW_float;                                    //float var used to hold the float value of the dew point.
+
   sensorstring.toCharArray(sensorstring_array, 30);   //convert the string to a char array 
   HUM = strtok(sensorstring_array, ",");              //let's pars the array at each comma
   TMP = strtok(NULL, ",");                            //let's pars the array at each comma
@@ -103,9 +165,14 @@ float DEW_float;                                      //float var used to hold t
   Serial.println();                                   //this just makes the output easier to read by adding an extra blank line. 
     
   //uncomment this section if you want to take the values and convert them into floating point number.
-  /*
-    HUM_float=atof(HUM);
-    TMP_float=atof(TMP);
-    DEW_float=atof(DEW);
-  */
+  HUM_float=atof(HUM);
+  TMP_float=atof(TMP);
+  DEW_float=atof(DEW);
+
+  uint8_t reg = 0;
+
+  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (HUM_float*100));
+  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (TMP_float*100));
+  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (DEW_float*100));
+  
 }
