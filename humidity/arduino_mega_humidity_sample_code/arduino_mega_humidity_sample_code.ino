@@ -19,6 +19,10 @@ String sensorstring = "";                             //a string to hold the dat
 boolean input_string_complete = false;                //have we received all the data from the PC
 boolean sensor_string_complete = false;               //have we received all the data from the Atlas Scientific product
 
+float HUM_float;                                      //float var used to hold the float value of the humidity.
+float TMP_float;                                      //float var used to hold the float value of the temperatur.
+float DEW_float;                                      //float var used to hold the float value of the dew point.
+
 
 // Set up MAC address and IP
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
@@ -117,6 +121,12 @@ void loop() {                                         //here we go...
     sensorstring = "";                                //clear the string
     sensor_string_complete = false;                   //reset the flag used to tell if we have received a completed string from the Atlas Scientific product
   }
+
+  uint8_t reg = 0;
+
+  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (HUM_float*100));
+  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (TMP_float*100));
+  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (DEW_float*100));
 }
 
 void print_Humidity_data(void) {                      //this function will pars the string  
@@ -127,9 +137,6 @@ void print_Humidity_data(void) {                      //this function will pars 
   char *NUL;                                          //char pointer used in string parsing (the sensor outputs some text that we don't need).
   char *DEW;                                          //char pointer used in string parsing.
 
-  float HUM_float;                                    //float var used to hold the float value of the humidity.
-  float TMP_float;                                    //float var used to hold the float value of the temperatur.
-  float DEW_float;                                    //float var used to hold the float value of the dew point.
   
   sensorstring.toCharArray(sensorstring_array, 30);   //convert the string to a char array 
   HUM = strtok(sensorstring_array, ",");              //let's pars the array at each comma
@@ -153,11 +160,5 @@ void print_Humidity_data(void) {                      //this function will pars 
   HUM_float=atof(HUM);
   TMP_float=atof(TMP);
   DEW_float=atof(DEW);
-
-  uint8_t reg = 0;
-
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (HUM_float*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (TMP_float*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (DEW_float*100));
   
 }
