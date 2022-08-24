@@ -30,7 +30,7 @@ float o2;                                             //used to hold a float num
 
 
 // Set up MAC address and IP
-byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEE};
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 IPAddress ip(172, 21, 103, 34);
 IPAddress netmask(255, 255, 254, 0);
 IPAddress gateway(172, 21, 102, 1);
@@ -138,7 +138,5 @@ void loop() {                                         //here we go...
   }
 
   uint8_t reg = 0;
-
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (o2*100));
-  
+  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (o2*100));  
 }
