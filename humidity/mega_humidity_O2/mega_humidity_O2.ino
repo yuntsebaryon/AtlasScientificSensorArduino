@@ -6,6 +6,11 @@
 //An Arduino MEGA was used to test this code.
 //This code was last tested 8/2020
 
+// Update: Yun-Tse
+// Date  : 2022.8.24
+// Combined the humidity and O2 sensors, with humidity using serial port 3 and O2 using port 2.
+// Currently the string from PC will only transfer to the humidity sensor.
+
 // Ethernet libraries
 #include <SPI.h>
 #include <Ethernet.h>
@@ -149,6 +154,7 @@ void loop() {                                         //here we go...
   }
 
   if (sensor_string_O2_complete == true) {            //if a string from the Atlas Scientific product has been received in its entirety
+    Serial.print("O2: ");
     Serial.println(sensorstring_O2);                  //send that string to the PC's serial monitor
 
     if (isdigit(sensorstring_O2[0])) {                   //if the first character in the string is a digit
