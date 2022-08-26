@@ -10,6 +10,8 @@
 // Date  : 2022.8.24
 // Combined the humidity and O2 sensors, with humidity using serial port 3 and O2 using port 2.
 // Currently the string from PC will only transfer to the humidity sensor.
+// Date  : 2022.8.25
+// Tested and it worked
 
 // Ethernet libraries
 #include <SPI.h>
@@ -48,7 +50,7 @@ ModbusTCPServer modbusTCPServer;
 
 
 void setup() {                                        //set up the hardware
-  
+
   Serial.begin(9600);                                 //set baud rate for the hardware serial port_0 to 9600
   Serial3.begin(9600);                                //set baud rate for software serial port_3 to 9600
   Serial2.begin(9600);                                //set baud rate for software serial port_2 to 9600
@@ -57,7 +59,7 @@ void setup() {                                        //set up the hardware
   inputstring_O2.reserve(10);                         //set aside some bytes for receiving data from the PC
   sensorstring_O2.reserve(30);                        //set aside some bytes for receiving data from Atlas Scientific product
 
-/*
+
   Ethernet.begin(mac, ip);                            // Set up the ethernet
   Ethernet.setSubnetMask(netmask);
   Ethernet.setGatewayIP(gateway);
@@ -88,7 +90,7 @@ void setup() {                                        //set up the hardware
   // configure input registers at address 0x00
 
   modbusTCPServer.configureInputRegisters(0x00,6);
-*/
+
 
 }
 
@@ -110,21 +112,21 @@ void serialEvent2() {                                 //if the hardware serial p
 }
 
 void loop() {                                         //here we go...
-/*
+
   EthernetClient client = ethServer.available();
-  
+
   if (client) {
     // a new client connected
     // Serial.println("new client");
 
-    // let the Modbus TCP accept the connection 
+    // let the Modbus TCP accept the connection
     modbusTCPServer.accept(client);
     if (client.connected()) {
       // poll for Modbus TCP requests, while client connected
       modbusTCPServer.poll();
     }
   }
-*/
+
   // Reading the humidity sensor...
   if (input_string_humidity_complete == true) {       //if a string from the PC has been received in its entirety
     Serial3.print(inputstring_humidity);              //send that string to the Atlas Scientific product
@@ -160,7 +162,7 @@ void loop() {                                         //here we go...
     if (isdigit(sensorstring_O2[0])) {                   //if the first character in the string is a digit
                                                       //uncomment this section to see how to convert the reading from a string to a float
       O2 = sensorstring_O2.toFloat();                   //convert the string to a integer number so it can be evaluated by the Arduino
-     /* 
+     /*
       if (o2 >= 22) {                                 //if the o2 is greater than or equal to 22%
         Serial.println("high");                       //print "high" this is demonstrating that the Arduino is evaluating the o2 as a number and not as a string
       }
@@ -169,21 +171,21 @@ void loop() {                                         //here we go...
       }
       */
     }
-    
+
     sensorstring_O2 = "";                              //clear the string:
     sensor_string_O2_complete = false;                 //reset the flag used to tell if we have received a completed string from the Atlas Scientific product
   }
-/*  
+
   uint8_t reg = 0;
 
   modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (HUM_float*100));
   modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (TMP_float*100));
   modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (DEW_float*100));
   modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (O2*100));
-*/
+
 }
 
-void print_Humidity_data(void) {                      //this function will pars the string  
+void print_Humidity_data(void) {                      //this function will pars the string
 
   char sensorstring_array[30];                        //we make a char array
   char *HUM;                                          //char pointer used in string parsing.
@@ -191,15 +193,15 @@ void print_Humidity_data(void) {                      //this function will pars 
   char *NUL;                                          //char pointer used in string parsing (the sensor outputs some text that we don't need).
   char *DEW;                                          //char pointer used in string parsing.
 
-  
-  sensorstring_humidity.toCharArray(sensorstring_array, 30);   //convert the string to a char array 
+
+  sensorstring_humidity.toCharArray(sensorstring_array, 30);   //convert the string to a char array
   HUM = strtok(sensorstring_array, ",");              //let's pars the array at each comma
   TMP = strtok(NULL, ",");                            //let's pars the array at each comma
   NUL = strtok(NULL, ",");                            //let's pars the array at each comma (the sensor outputs the word "DEW" in the string, we dont need it)
   DEW = strtok(NULL, ",");                            //let's pars the array at each comma
 
-  Serial.println();                                   //this just makes the output easier to read by adding an extra blank line. 
- 
+  Serial.println();                                   //this just makes the output easier to read by adding an extra blank line.
+
   Serial.print("HUM:");                               //we now print each value we parsed separately.
   Serial.println(HUM);                                //this is the humidity value.
 
@@ -208,11 +210,11 @@ void print_Humidity_data(void) {                      //this function will pars 
 
   Serial.print("DEW:");                               //we now print each value we parsed separately.
   Serial.println(DEW);                                //this is the dew point.
-  Serial.println();                                   //this just makes the output easier to read by adding an extra blank line. 
-    
+  Serial.println();                                   //this just makes the output easier to read by adding an extra blank line.
+
   //uncomment this section if you want to take the values and convert them into floating point number.
   HUM_float = atof(HUM);
   TMP_float = atof(TMP);
   DEW_float = atof(DEW);
-  
+
 }
