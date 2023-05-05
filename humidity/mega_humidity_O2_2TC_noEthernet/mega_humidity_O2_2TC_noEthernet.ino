@@ -12,6 +12,8 @@
 // Currently the string from PC will only transfer to the humidity sensor.
 // Date  : 2022.8.25
 // Tested and it worked
+// Date  : 2023.4.2
+// Added the two thermocouple breakouts
 
 // Ethernet libraries
 #include <SPI.h>
@@ -20,6 +22,7 @@
 #include <ArduinoRS485.h> // ArduinoModbus depends on the ArduinoRS485 library
 #include <ArduinoModbus.h>
 
+#include <Adafruit_MAX31856.h>
 
 // Humidity sensor
 String inputstring_humidity = "";                              //a string to hold incoming data from the PC
@@ -48,6 +51,10 @@ IPAddress gateway(172, 21, 102, 1);
 EthernetServer ethServer(502);
 ModbusTCPServer modbusTCPServer;
 
+// Use software SPI: CS, DI, DO, CLK
+Adafruit_MAX31856 thermo1 = Adafruit_MAX31856(46, 48, 50, 52);
+Adafruit_MAX31856 thermo2 = Adafruit_MAX31856(47, 49, 51, 53);
+
 
 void setup() {                                        //set up the hardware
 
@@ -60,36 +67,47 @@ void setup() {                                        //set up the hardware
   sensorstring_O2.reserve(30);                        //set aside some bytes for receiving data from Atlas Scientific product
 
 
-  Ethernet.begin(mac, ip);                            // Set up the ethernet
-  Ethernet.setSubnetMask(netmask);
-  Ethernet.setGatewayIP(gateway);
+  thermo1.begin();
 
-  // Check for Ethernet hardware present
-  if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
-    while (true) {
-      delay(1); // do nothing, no point running without Ethernet hardware
-    }
-  }
-  if (Ethernet.linkStatus() == LinkOFF) {
-    Serial.println("Ethernet cable is not connected.");
-  }
+  thermo1.setThermocoupleType(MAX31856_TCTYPE_K);
 
-  Serial.print("My IP address: ");
-  Serial.println(Ethernet.localIP());
-
-  // start the server
-  ethServer.begin();
-
-  // start the Modbus TCP server
-  if (!modbusTCPServer.begin()) {
-    Serial.println("Failed to start Modbus TCP Server!");
-    while (1);
+  Serial.print("Thermocouple 1 type: ");
+  switch (thermo1.getThermocoupleType() ) {
+    case MAX31856_TCTYPE_B: Serial.println("B Type"); break;
+    case MAX31856_TCTYPE_E: Serial.println("E Type"); break;
+    case MAX31856_TCTYPE_J: Serial.println("J Type"); break;
+    case MAX31856_TCTYPE_K: Serial.println("K Type"); break;
+    case MAX31856_TCTYPE_N: Serial.println("N Type"); break;
+    case MAX31856_TCTYPE_R: Serial.println("R Type"); break;
+    case MAX31856_TCTYPE_S: Serial.println("S Type"); break;
+    case MAX31856_TCTYPE_T: Serial.println("T Type"); break;
+    case MAX31856_VMODE_G8: Serial.println("Voltage x8 Gain mode"); break;
+    case MAX31856_VMODE_G32: Serial.println("Voltage x8 Gain mode"); break;
+    default: Serial.println("Unknown"); break;
   }
 
-  // configure input registers at address 0x00
+  delay(500);
 
-  modbusTCPServer.configureInputRegisters(0x00,6);
+  thermo2.begin();
+
+  thermo2.setThermocoupleType(MAX31856_TCTYPE_K);
+
+  Serial.print("Thermocouple 2 type: ");
+  switch (thermo2.getThermocoupleType() ) {
+    case MAX31856_TCTYPE_B: Serial.println("B Type"); break;
+    case MAX31856_TCTYPE_E: Serial.println("E Type"); break;
+    case MAX31856_TCTYPE_J: Serial.println("J Type"); break;
+    case MAX31856_TCTYPE_K: Serial.println("K Type"); break;
+    case MAX31856_TCTYPE_N: Serial.println("N Type"); break;
+    case MAX31856_TCTYPE_R: Serial.println("R Type"); break;
+    case MAX31856_TCTYPE_S: Serial.println("S Type"); break;
+    case MAX31856_TCTYPE_T: Serial.println("T Type"); break;
+    case MAX31856_VMODE_G8: Serial.println("Voltage x8 Gain mode"); break;
+    case MAX31856_VMODE_G32: Serial.println("Voltage x8 Gain mode"); break;
+    default: Serial.println("Unknown"); break;
+  }
+
+  delay(500);
 
 
 }
@@ -113,20 +131,6 @@ void serialEvent2() {                                 //if the hardware serial p
 
 void loop() {                                         //here we go...
 
-  EthernetClient client = ethServer.available();
-
-  if (client) {
-    // a new client connected
-    // Serial.println("new client");
-
-    // let the Modbus TCP accept the connection
-    modbusTCPServer.accept(client);
-    if (client.connected()) {
-      // poll for Modbus TCP requests, while client connected
-      modbusTCPServer.poll();
-    }
-  }
-
   // Reading the humidity sensor...
   if (input_string_humidity_complete == true) {       //if a string from the PC has been received in its entirety
     Serial3.print(inputstring_humidity);              //send that string to the Atlas Scientific product
@@ -146,8 +150,6 @@ void loop() {                                         //here we go...
     sensorstring_humidity = "";                       //clear the string
     sensor_string_humidity_complete = false;          //reset the flag used to tell if we have received a completed string from the Atlas Scientific product
   }
-
-  delay(5);
 
   // Reading the O2 sensor...
   if (input_string_O2_complete == true) {             //if a string from the PC has been received in its entirety
@@ -178,12 +180,40 @@ void loop() {                                         //here we go...
     sensor_string_O2_complete = false;                 //reset the flag used to tell if we have received a completed string from the Atlas Scientific product
   }
 
-  uint8_t reg = 0;
+  float TCTemp1 = thermo1.readThermocoupleTemperature();
+  float TCTemp2 = thermo2.readThermocoupleTemperature();
+  Serial.print("TC1: ");
+  Serial.println(TCTemp1);
+  Serial.print("TC2: ");
+  Serial.println(TCTemp2);
 
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (HUM_float*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (TMP_float*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (DEW_float*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (O2*100));
+  // Check and print any faults
+  uint8_t fault1 = thermo1.readFault();
+  if (fault1) {
+    if (fault1 & MAX31856_FAULT_CJRANGE) Serial.println("Cold Junction 1 Range Fault");
+    if (fault1 & MAX31856_FAULT_TCRANGE) Serial.println("Thermocouple 1 Range Fault");
+    if (fault1 & MAX31856_FAULT_CJHIGH)  Serial.println("Cold Junction 1 High Fault");
+    if (fault1 & MAX31856_FAULT_CJLOW)   Serial.println("Cold Junction 1 Low Fault");
+    if (fault1 & MAX31856_FAULT_TCHIGH)  Serial.println("Thermocouple 1 High Fault");
+    if (fault1 & MAX31856_FAULT_TCLOW)   Serial.println("Thermocouple 1 Low Fault");
+    if (fault1 & MAX31856_FAULT_OVUV)    Serial.println("Over/Under Voltage 1 Fault");
+    if (fault1 & MAX31856_FAULT_OPEN)    Serial.println("Thermocouple 1 Open Fault");
+  }
+  delay(1000);
+
+  // Check and print any faults
+  uint8_t fault2 = thermo2.readFault();
+  if (fault2) {
+    if (fault2 & MAX31856_FAULT_CJRANGE) Serial.println("Cold Junction 2 Range Fault");
+    if (fault2 & MAX31856_FAULT_TCRANGE) Serial.println("Thermocouple 2 Range Fault");
+    if (fault2 & MAX31856_FAULT_CJHIGH)  Serial.println("Cold Junction 2 High Fault");
+    if (fault2 & MAX31856_FAULT_CJLOW)   Serial.println("Cold Junction 2 Low Fault");
+    if (fault2 & MAX31856_FAULT_TCHIGH)  Serial.println("Thermocouple 2 High Fault");
+    if (fault2 & MAX31856_FAULT_TCLOW)   Serial.println("Thermocouple 2 Low Fault");
+    if (fault2 & MAX31856_FAULT_OVUV)    Serial.println("Over/Under Voltage 2 Fault");
+    if (fault2 & MAX31856_FAULT_OPEN)    Serial.println("Thermocouple 2 Open Fault");
+  }
+  delay(1000);
 
 }
 
