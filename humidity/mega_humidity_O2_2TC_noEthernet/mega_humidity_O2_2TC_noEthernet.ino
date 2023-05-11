@@ -52,8 +52,8 @@ EthernetServer ethServer(502);
 ModbusTCPServer modbusTCPServer;
 
 // Use software SPI: CS, DI, DO, CLK
-Adafruit_MAX31856 thermo1 = Adafruit_MAX31856(46, 48, 50, 52);
-Adafruit_MAX31856 thermo2 = Adafruit_MAX31856(47, 49, 51, 53);
+Adafruit_MAX31856 thermo1 = Adafruit_MAX31856(22, 24, 26, 28);
+Adafruit_MAX31856 thermo2 = Adafruit_MAX31856(29, 27, 25, 23);
 
 
 void setup() {                                        //set up the hardware
