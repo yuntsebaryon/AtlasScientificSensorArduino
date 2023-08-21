@@ -20,3 +20,35 @@
 | T_DIN       | 11 (DOUT)      |                             |
 | T_DO        | 12 (DIN)       |                             |
 | T_IRQ       | 2              |
+
+-----------------------------------------------------------------
+
+### Wiring the Atlas Scientific Gas Sensors: 2023.8.20
+
+| Humidity Wire | Teensy 4.1 Pin | Note   |
+| ------------- | -------------- | ------ |
+| Red           | 5V             |        |
+| Black         | GND            | The GND next to 5V |
+| White         | 14             | TX3    |
+| Green         | 15             | RX3    |
+
+| O2 Wire       | Teensy 4.1 Pin | Note   |
+| ------------- | -------------- | ------ |
+| Red           | 5V             |        |
+| Black         | GND            | The GND next to 0 |
+| White         | 17             | TX4    |
+| Green         | 16             | RX4    |
+
+-----------------------------------------------------------------
+
+### Wiring Adafruit Max31856 Thermocouple Board: 2023.8.20
+
+| Max31856    | Teensy 4.1 Pin | Note                        |
+| ----------- | -------------- | --------------------------- |
+| Vin         | 5V             |                             |
+| GND         | GND            | The GND next to 0           |
+| SCK         | 33             |                             |
+| SDO         | 32             |                             |
+| SDI         | 31             |                             |
+| CS          | 30             |                             |
+

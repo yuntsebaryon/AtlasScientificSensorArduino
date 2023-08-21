@@ -243,27 +243,6 @@ void loop() {                                         //here we go...
 
   delay(5);
 
-  // Display the temperatures
-  tft.fillScreen(ILI9341_BLACK);
-  tft.setCursor(0, 0);
-  tft.print("Humidity: ");
-  tft.print(HUM_float);
-  tft.println(" %");
-  tft.print("Air T: ");
-  tft.print(TMP_float);
-  tft.println(" C");
-  tft.print("Dew T: ");
-  tft.print(DEW_float);
-  tft.println(" C");
-  tft.print("O2: ");
-  tft.print(O2);
-  tft.println(" %");
-  tft.print("TC: ");
-  tft.print(TCTemp1);
-  tft.println(" C");
-
-  delay(5);
-
 /*
   if (Serial.available()) {
     processSyncMessage();
@@ -285,7 +264,28 @@ void loop() {                                         //here we go...
     Serial.print(O2);
     Serial.print(" ");
     Serial.println(TCTemp1);
-  //}
+  // }
+
+  delay(10);
+
+  // Display the temperatures
+  tft.fillScreen(ILI9341_BLACK);
+  tft.setCursor(0, 0);
+  tft.print("Humidity: ");
+  tft.print(HUM_float);
+  tft.println(" %");
+  tft.print("Air T: ");
+  tft.print(TMP_float);
+  tft.println(" C");
+  tft.print("Dew T: ");
+  tft.print(DEW_float);
+  tft.println(" C");
+  tft.print("O2: ");
+  tft.print(O2);
+  tft.println(" %");
+  tft.print("TC: ");
+  tft.print(TCTemp1);
+  tft.println(" C");
   
   delay(500);
 
