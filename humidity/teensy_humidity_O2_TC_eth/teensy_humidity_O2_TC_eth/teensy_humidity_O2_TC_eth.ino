@@ -22,9 +22,9 @@ using namespace qindesign::network;
 #include <Adafruit_MAX31856.h>
 
 #define LOOPDELAY 300
-#define DI  11
-#define DO  12
-#define CLK 13
+#define DI  13
+#define DO  14
+#define CLK 35
 
 
 // Humidity sensor
@@ -59,9 +59,9 @@ EthernetServer ethServer(502);
 ModbusTCPServer modbusTCPServer;
 
 // Use software SPI: CS, DI, DO, CLK
-Adafruit_MAX31856 thermo1 = Adafruit_MAX31856(10, DI, DO, CLK);
-Adafruit_MAX31856 thermo2 = Adafruit_MAX31856(36, DI, DO, CLK);
-Adafruit_MAX31856 thermo3 = Adafruit_MAX31856(37, DI, DO, CLK);
+Adafruit_MAX31856 thermo1 = Adafruit_MAX31856(40, DI, DO, CLK);
+Adafruit_MAX31856 thermo2 = Adafruit_MAX31856(33, DI, DO, CLK);
+Adafruit_MAX31856 thermo3 = Adafruit_MAX31856(27, DI, DO, CLK);
 
 
 void teensyMAC(uint8_t* mac) {
