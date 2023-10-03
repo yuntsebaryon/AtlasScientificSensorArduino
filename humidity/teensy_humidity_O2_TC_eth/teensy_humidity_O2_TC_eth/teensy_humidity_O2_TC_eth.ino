@@ -22,9 +22,9 @@ using namespace qindesign::network;
 #include <Adafruit_MAX31856.h>
 
 #define LOOPDELAY 300
-#define DI  13
-#define DO  14
-#define CLK 35
+#define DI  11
+#define DO  12
+#define CLK 13
 
 
 // Humidity sensor
@@ -59,9 +59,9 @@ EthernetServer ethServer(502);
 ModbusTCPServer modbusTCPServer;
 
 // Use software SPI: CS, DI, DO, CLK
-Adafruit_MAX31856 thermo1 = Adafruit_MAX31856(40, DI, DO, CLK);
-Adafruit_MAX31856 thermo2 = Adafruit_MAX31856(33, DI, DO, CLK);
-Adafruit_MAX31856 thermo3 = Adafruit_MAX31856(27, DI, DO, CLK);
+Adafruit_MAX31856 thermo1 = Adafruit_MAX31856(18, DI, DO, CLK);
+Adafruit_MAX31856 thermo2 = Adafruit_MAX31856(41, DI, DO, CLK);
+Adafruit_MAX31856 thermo3 = Adafruit_MAX31856(35, DI, DO, CLK);
 
 
 void teensyMAC(uint8_t* mac) {
@@ -81,8 +81,8 @@ void setup() {                                        //set up the hardware
 
   inputstring_humidity.reserve(10);                   //set aside some bytes for receiving data from the PC
   sensorstring_humidity.reserve(30);                  //set aside some bytes for receiving data from Atlas Scientific product
-  Serial3.print("O,T,1\r");                          //enable the temperature readout
-  Serial3.print("O,Dew,1\r");                        //enable the dew point readout
+  Serial2.print("O,T,1\r");                          //enable the temperature readout
+  Serial2.print("O,Dew,1\r");                        //enable the dew point readout
   inputstring_O2.reserve(10);                         //set aside some bytes for receiving data from the PC
   sensorstring_O2.reserve(30);                        //set aside some bytes for receiving data from Atlas Scientific product
 
@@ -195,13 +195,13 @@ void serialEvent3() {                                 //if the hardware serial p
 }
 */
 
-void serialEvent3() {                                 //if the hardware serial port_3 receives a char
-  sensorstring_humidity = Serial3.readStringUntil(13); //read the string until we see a <CR>
+void serialEvent2() {                                 //if the hardware serial port_3 receives a char
+  sensorstring_humidity = Serial2.readStringUntil(13); //read the string until we see a <CR>
   sensor_string_humidity_complete = true;             //set the flag used to tell if we have received a completed string from the PC
 }
 
-void serialEvent2() {                                 //if the hardware serial port_2 receives a char
-  sensorstring_O2 = Serial2.readStringUntil(13);      //read the string until we see a <CR>
+void serialEvent3() {                                 //if the hardware serial port_2 receives a char
+  sensorstring_O2 = Serial3.readStringUntil(13);      //read the string until we see a <CR>
   sensor_string_O2_complete = true;                   //set the flag used to tell if we have received a completed string from the PC
 }
 
@@ -229,14 +229,14 @@ void loop() {                                         //here we go...
 
   // Reading the humidity sensor...
   if (input_string_humidity_complete == true) {       //if a string from the PC has been received in its entirety
-    Serial3.print(inputstring_humidity);              //send that string to the Atlas Scientific product
-    Serial3.print('\r');                              //add a <CR> to the end of the string
+    Serial2.print(inputstring_humidity);              //send that string to the Atlas Scientific product
+    Serial2.print('\r');                              //add a <CR> to the end of the string
     inputstring_humidity = "";                        //clear the string
     input_string_humidity_complete = false;           //reset the flag used to tell if we have received a completed string from the PC
   }
 
-  if (Serial3.available() > 0) {                     //if we see that the Atlas Scientific product has sent a character
-    char inchar = (char)Serial3.read();              //get the char we just recived
+  if (Serial2.available() > 0) {                     //if we see that the Atlas Scientific product has sent a character
+    char inchar = (char)Serial2.read();              //get the char we just recived
     sensorstring_humidity += inchar;                 //add the char to the var called sensorstring
     if (inchar == '\r') {                            //if the incoming character is a <CR>
       sensor_string_humidity_complete = true;        //set the flag
@@ -259,14 +259,14 @@ void loop() {                                         //here we go...
 
   // Reading the O2 sensor
   if (input_string_O2_complete == true) {             //if a string from the PC has been received in its entirety
-    Serial2.print(inputstring_O2);                    //send that string to the Atlas Scientific product
-    Serial2.print('\r');                              //add a <CR> to the end of the string
+    Serial3.print(inputstring_O2);                    //send that string to the Atlas Scientific product
+    Serial3.print('\r');                              //add a <CR> to the end of the string
     inputstring_O2 = "";                              //clear the string
     input_string_O2_complete = false;                 //reset the flag used to tell if we have received a completed string from the PC
   }
 
-  if (Serial2.available() > 0) {                      //if we see that the Atlas Scientific product has sent a character
-    char inchar = (char)Serial2.read();               //get the char we just received
+  if (Serial3.available() > 0) {                      //if we see that the Atlas Scientific product has sent a character
+    char inchar = (char)Serial3.read();               //get the char we just received
     sensorstring_O2 += inchar;                        //add the char to the var called sensorstring
     if (inchar == '\r') {                             //if the incoming character is a <CR>
       sensor_string_O2_complete = true;               //set the flag
@@ -359,13 +359,13 @@ void loop() {                                         //here we go...
  
   uint8_t reg = 0;
 
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (HUM_float*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (TMP_float*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (DEW_float*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (O2*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (TCTemp1*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (TCTemp2*100));
-  modbusTCPServer.inputRegisterWrite(reg++, (uint16_t) (TCTemp3*100));
+  modbusTCPServer.inputRegisterWrite(reg++, (int16_t) (HUM_float*100));
+  modbusTCPServer.inputRegisterWrite(reg++, (int16_t) (TMP_float*100));
+  modbusTCPServer.inputRegisterWrite(reg++, (int16_t) (DEW_float*100));
+  modbusTCPServer.inputRegisterWrite(reg++, (int16_t) (O2*100));
+  modbusTCPServer.inputRegisterWrite(reg++, (int16_t) (TCTemp1*10));
+  modbusTCPServer.inputRegisterWrite(reg++, (int16_t) (TCTemp2*10));
+  modbusTCPServer.inputRegisterWrite(reg++, (int16_t) (TCTemp3*10));
   serveNetwork();
 
   delay(500);
